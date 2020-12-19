@@ -1,8 +1,10 @@
+import sys
+import time
 import turtle
 import os
 import math
 import easygui
-import random
+import tkinter as tk
 
 # set up screen
 mainScreen = turtle.Screen()
@@ -27,7 +29,6 @@ for side in range(4):  # draw square
     borderPen.fd(600)  # go forward
     borderPen.lt(90)  # go left
 borderPen.hideturtle()
-
 
 # score
 score = 0
@@ -61,6 +62,35 @@ bullet.shapesize(0.5, 0.5)
 bullet.hideturtle()
 bulletSpeed = 17
 
+
+# def press():
+#     print("hello")
+#
+# # pause button
+# canvas = mainScreen.getcanvas()
+# button = tk.Button(canvas.master, text="Press me", command=press)
+# canvas.create_window(0, 300, window=button)
+
+msg = "Please enter your name and age to play"
+title = "Welcome to Space Invaders!"
+fieldNames = ["Name", "Age"]
+fieldValues = []
+fieldValues = easygui.multenterbox(msg, title, fieldNames)
+if fieldValues is None:
+    exit()
+
+# make sure that none of the fields were left blank
+while 1:
+    if fieldValues is None:
+        break
+    errmsg = ""
+    for i in range(len(fieldNames)):
+        if fieldValues[i].strip() == "":
+            print(fieldValues[i])
+            errmsg = errmsg + ('"%s" is a required field.\n\n' % fieldNames[i])
+    if errmsg == "": break  # no problems found
+    fieldValues = easygui.multenterbox(errmsg, title, fieldNames, fieldValues)
+
 # create enemy
 numberOfEnemies = 30
 enemies = []
@@ -70,7 +100,6 @@ for i in range(numberOfEnemies):
 enemyStartX = -225
 enemyStartY = 250
 enemyNumber = 0
-
 
 for enemy in enemies:
     enemy.color("red")
@@ -88,12 +117,13 @@ for enemy in enemies:
         enemyNumber = 0
 enemySpeed = 1
 
-
 # define bullet states: ready and dire
 bulletState = "ready"
 
+
 def IsCollision(turtle1, turtle2):
     # calculate the collision based on the distance
+    # math.pow in dutch terms is "tot de macht". Dus 2^2
     distance = math.sqrt(math.pow(turtle1.xcor() - turtle2.xcor(), 2) + math.pow(turtle1.ycor() - turtle2.ycor(), 2))
 
     # the higher the number, the closer the distance and greater the collision
@@ -119,30 +149,10 @@ def FireBullet():
 # move the player
 def MoveLeft():
     player.speed = -2
-    # x = player.xcor()
-    # x -= player.speed
-    # player.setx(x)
 
 
 def MoveRight():
     player.speed = 2
-    # x = player.xcor()
-    # x += player.speed
-    # player.setx(x)
-
-
-def MoveUp():
-    # player.speed = 2
-    y = player.ycor()
-    y += 5
-    player.sety(y)
-
-
-def MoveDown():
-    # player.speed = 2
-    y = player.ycor()
-    y += 5
-    player.sety(y)
 
 
 def MovePlayer():
@@ -161,44 +171,27 @@ def MovePlayer():
 mainScreen.listen()
 mainScreen.onkeypress(MoveLeft, "Left")
 mainScreen.onkeypress(MoveRight, "Right")
-# mainScreen.onkeypress(MoveUp, "Up")
-# mainScreen.onkeypress(MoveDown, "Down")
 mainScreen.onkeypress(FireBullet, "space")
-
-msg = "Please enter your name and age to play"
-title = "Welcome to Space Invaders!"
-fieldNames = ["Name", "Age"]
-fieldValues = []
-fieldValues = easygui.multenterbox(msg, title, fieldNames)
-if fieldValues is None:
-    exit()
-
-# make sure that none of the fields were left blank
-while 1:
-    if fieldValues is None:
-        break
-    errmsg = ""
-    for i in range(len(fieldNames)):
-        if fieldValues[i].strip() == "":
-            print(fieldValues[i])
-            errmsg = errmsg + ('"%s" is a required field.\n\n' % fieldNames[i])
-    if errmsg == "": break  # no problems found
-    fieldValues = easygui.multenterbox(errmsg, title, fieldNames, fieldValues)
-
 
 # Using for loop
 for u in range(len(fieldNames)):
     if fieldNames[u] == "Age":
         age = int(fieldValues[u])
         isinstance(age, int)
-        global bool
 
-        # if age >= 6:
-            # main loop
+IsGameRunning = True
+
+
+def main(score=score, enemySpeed=enemySpeed):
+    while True:
+        global bulletState, IsGameRunning
         while True:
-            bool = True
+            # IsGameRunning = True
+            # update the screen, if this is turned off, nothing will show on the screen
             mainScreen.update()
             MovePlayer()
+            msg = "Please enter your name and age to play"
+            title = "Welcome to Space Invaders!"
 
             # move the bullet
             if bulletState == "fire":
@@ -247,25 +240,25 @@ for u in range(len(fieldNames)):
                     scorePen.write(scoreString, False, align="left", font=("Arial", 14, "normal"))
                     if not enemies:
                         easygui.msgbox("You win", "Congratulation!")
-                        break
-                elif IsCollision(player, enemy):
-                    bool = False
+                        # break
+
+                if IsCollision(player, enemy):
+                    time.sleep(1)
+                    IsGameRunning = False
+                    easygui.msgbox('You lost. Please try again', 'Game over!')
                     player.hideturtle()
-                    enemy.hideturtle()
                     break
+            break
 
-            if bool is False:
-                print(bool)
-                easygui.msgbox('You lost. Please try again', 'Game over!')
-                break
-        # else:
-        #     easygui.msgbox("Sorry you are not old enough to play this game")
-mainScreen.exitonclick()
+        if IsGameRunning is False:
+            time.sleep(1)
+            if easygui.ccbox(msg, title):  # show a Continue/Cancel dialog
+                # user chose Continue
+                os.execl(sys.executable, sys.executable, *sys.argv)
+            else:  # user chose Cancel
+                exit()
 
-# msg = "Please enter your name and age to play"
-# title = "Welcome to Space Invaders!"
-# if easygui.ccbox(msg, title):     # show a Continue/Cancel dialog
-#     # pass  # user chose Continue
-# else:  # user chose Cancel
-#     exit()
 
+if __name__ == "__main__":
+    main()
+    mainScreen.exitonclick()
